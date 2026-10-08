@@ -3,7 +3,7 @@
 **Course**: Data Science for Managers | Applied AI Capstone
 
 ## 🚀 Live Interactive Prototype
-👉 **[Click Here to Launch RetentionPulse AI Live App](https://ai.studio/apps/5c256c8b-d980-4dce-9ca3-7b343510f052?fullscreenApplet=true)**
+👉 **[Click Here to Launch RetentionPulse AI Live App](https://retentionpulse-ai-customer-churn-lifetime-value-o.ai.studio)**
 
 ## 📂 Repository Structure
 - `src/data.py`: Preprocessing, feature scaling, and synthetic data pipeline.
