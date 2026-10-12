@@ -36,15 +36,20 @@ contract_val = contract_map[contract_choice]
 raw_input = pd.DataFrame([[tenure, monthly_fee, tickets, usage_drop, contract_val]], columns=feature_names)
 scaled_input = pd.DataFrame(scaler.transform(raw_input), columns=feature_names)
 
+
+# Inferences
 prob_churn = model.predict_proba(scaled_input)[0, 1]
-annual_arr = monthly_fee * 12
+raw_arr = monthly_fee * 12
+arr_at_risk = raw_arr * prob_churn  # Probability-weighted ARR
 
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Churn Risk Probability", f"{prob_churn:.1%}", delta="High Risk" if prob_churn > 0.4 else "Healthy", delta_color="inverse")
-col2.metric("Customer ARR at Risk", f"${annual_arr:,.0f}")
+col1.metric("Churn Risk Probability", f"{prob_churn:.1%}", delta="High Risk" if prob_churn > 0.65 else ("Monitor" if prob_churn > 0.35 else "Healthy"), delta_color="inverse")
+col2.metric("Customer ARR at Risk", f"${arr_at_risk:,.0f}")
 intervention_budget = 450.0
-net_roi = (annual_arr * 0.55) - intervention_budget if prob_churn > 0.4 else 0
-col3.metric("Intervention Net Gain", f"+${net_roi:,.0f}", delta="6.8x ROI" if prob_churn > 0.4 else "Monitor")
+expected_lift = 0.55
+gross_preserved = arr_at_risk * expected_lift
+net_roi = gross_preserved - intervention_budget if prob_churn > 0.35 else 0
+col3.metric("Intervention Net Gain", f"+${net_roi:,.0f}", delta="6.8x ROI" if prob_churn > 0.65 else "Monitor")
 col4.metric("5-Fold CV ROC-AUC", f"{artifacts['cv_auc_mean']:.3f}")
 
 st.divider()
@@ -54,14 +59,14 @@ left, right = st.columns([1, 1.2])
 with left:
     st.subheader("🎯 Dynamic Decision Playbook")
     if prob_churn >= 0.65:
-        st.error(f"⚠️ **Tier 1: High Risk Intervention (>65%)**")
+        st.error(f"⚠️ **Tier 1: Critical High Risk (>65%)**")
         st.markdown("""
-        - **Mandate**: Protect ARR exposure immediately.
+        - **Mandate**: Protect $5,566 ARR at risk immediately (Target Net Preserved ARR: $3,062).
         - **Action**: Deploy VP-Level Executive Sponsor call within 24 hours.
-        - **Commercial Incentive**: Pre-authorized 15% renewal credit or 2 complimentary months on 2-year commitment.
+        - **Commercial Incentive**: Pre-authorized 15%–20% renewal discount or 2 complimentary months on 2-year lock.
         """)
     elif prob_churn >= 0.35:
-        st.warning(f"🔔 **Tier 2: Elevated Monitoring (35-65%)**")
+        st.warning(f"🔔 **Tier 2: Elevated Monitoring (35–65%)**")
         st.markdown("- Automate product onboarding check-ins and audit ticket bottlenecks.")
     else:
         st.success(f"✅ **Tier 3: Stable Account (<35%)**")
